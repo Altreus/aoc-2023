@@ -9,6 +9,12 @@ struct Hand {
     blue: Option<i64>
 }
 
+#[derive(Debug)]
+struct Game {
+    hands: Vec<Hand>,
+    id: i64
+}
+
 fn main() {
     let argv : Vec<_> = env::args().collect();
     let proto_hand = Hand {
@@ -20,18 +26,33 @@ fn main() {
     let total = read_to_string(&argv[1])
         .unwrap()
         .lines()
-        .filter(|l| is_game_possible(l, &proto_hand))
-        .map(|l| get_game_id(l))
+        .map(|l| str_to_game(l))
+        .filter(|g| is_game_possible(g, &proto_hand))
+        .map(|g| g.id)
         .sum::<i64>();
 
-    println!("{}", total);
+    let powersum = 0;
+
+    println!("Part 1: {}", total);
+
+    println!("Part 2: {}", powersum);
 }
 
-fn is_game_possible(line: &str, proto: &Hand) -> bool {
-    let hands = line.split(";");
-
+fn is_game_possible(game: &Game, proto: &Hand) -> bool {
     // Is any hand bigger than the prototype hand? That means it's not possible
-    return !hands.map(|h| str_to_hand(h)).any(|h| is_any_field_bigger(&h, proto));
+    return !game.hands.iter()
+        .any(|h| is_any_field_bigger(&h, proto));
+}
+
+fn str_to_game(string: &str) -> Game {
+    // it doesn't really matter that the first split has the Game N: part
+    let hands = string.split(";").map(|h| str_to_hand(h));
+    let id = get_game_id(string);
+
+    return Game {
+        hands: hands.collect::<Vec<Hand>>(),
+        id: id
+    }
 }
 
 fn str_to_hand(string: &str) -> Hand {
@@ -80,3 +101,6 @@ fn get_game_id(line: &str) -> i64 {
     return one_int_from_str(line, re).unwrap();
 
 }
+
+//fn max_of_each_colour(hands: &Vec<Hand>) -> Hand {
+//}
