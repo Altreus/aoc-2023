@@ -23,15 +23,21 @@ fn main() {
         blue: Some(14)
     };
 
-    let total = read_to_string(&argv[1])
-        .unwrap()
+    // The compiler told me to make this binding variable
+    let binding = read_to_string(&argv[1])
+        .unwrap();
+    let games = binding
         .lines()
-        .map(|l| str_to_game(l))
+        .map(|l| str_to_game(l));
+
+    let total = games.clone()
         .filter(|g| is_game_possible(g, &proto_hand))
         .map(|g| g.id)
         .sum::<i64>();
 
-    let powersum = 0;
+    let powersum = games.map(|g| max_of_each_colour(&g.hands))
+        .map(|h| power(&h))
+        .sum::<i64>();
 
     println!("Part 1: {}", total);
 
@@ -102,5 +108,32 @@ fn get_game_id(line: &str) -> i64 {
 
 }
 
-//fn max_of_each_colour(hands: &Vec<Hand>) -> Hand {
-//}
+fn max_of_each_colour(hands: &Vec<Hand>) -> Hand {
+    let mut hand = Hand {
+        red: None, green: None, blue: None
+    };
+
+    for h in hands {
+        match (hand.red, h.red) {
+            (None, None) | (Some(_), None) => (),
+            (None, Some(_)) => hand.red = h.red,
+            (Some(r1), Some(r2)) => if r2 > r1 { hand.red = h.red }
+        }
+        match (hand.green, h.green) {
+            (None, None) | (Some(_), None) => (),
+            (None, Some(_)) => hand.green = h.green,
+            (Some(r1), Some(r2)) => if r2 > r1 { hand.green = h.green }
+        }
+        match (hand.blue, h.blue) {
+            (None, None) | (Some(_), None) => (),
+            (None, Some(_)) => hand.blue = h.blue,
+            (Some(r1), Some(r2)) => if r2 > r1 { hand.blue = h.blue }
+        }
+    }
+
+    return hand;
+}
+
+fn power(hand: &Hand) -> i64 {
+    return hand.red.unwrap_or(1) * hand.green.unwrap_or(1) * hand.blue.unwrap_or(1);
+}
