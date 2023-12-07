@@ -114,21 +114,21 @@ fn max_of_each_colour(hands: &Vec<Hand>) -> Hand {
     };
 
     for h in hands {
-        match (hand.red, h.red) {
-            (None, None) | (Some(_), None) => (),
-            (None, Some(_)) => hand.red = h.red,
-            (Some(r1), Some(r2)) => if r2 > r1 { hand.red = h.red }
-        }
-        match (hand.green, h.green) {
-            (None, None) | (Some(_), None) => (),
-            (None, Some(_)) => hand.green = h.green,
-            (Some(r1), Some(r2)) => if r2 > r1 { hand.green = h.green }
-        }
-        match (hand.blue, h.blue) {
-            (None, None) | (Some(_), None) => (),
-            (None, Some(_)) => hand.blue = h.blue,
-            (Some(r1), Some(r2)) => if r2 > r1 { hand.blue = h.blue }
-        }
+        hand.red = match (hand.red, h.red) {
+            (r, None) => r,
+            (None, Some(r)) => Some(r),
+            (Some(r1), Some(r2)) => Some(std::cmp::max(r1,r2))
+        };
+        hand.green = match (hand.green, h.green) {
+            (g, None) => g,
+            (None, Some(g)) => Some(g),
+            (Some(g1), Some(g2)) => Some(std::cmp::max(g1,g2))
+        };
+        hand.blue = match (hand.blue, h.blue) {
+            (b, None) => b,
+            (None, Some(b)) => Some(b),
+            (Some(b1), Some(b2)) => Some(std::cmp::max(b1,b2))
+        };
     }
 
     return hand;
