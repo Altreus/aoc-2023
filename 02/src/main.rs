@@ -4,9 +4,7 @@ use regex::Regex;
 
 #[derive(Debug)]
 struct Hand {
-    red: Option<i64>,
-    green: Option<i64>,
-    blue: Option<i64>
+    rgb: [ Option<i64>; 3 ]
 }
 
 #[derive(Debug)]
@@ -18,9 +16,7 @@ struct Game {
 fn main() {
     let argv : Vec<_> = env::args().collect();
     let proto_hand = Hand {
-        red: Some(12),
-        green: Some(13),
-        blue: Some(14)
+        rgb: [ Some(12), Some(13), Some(14) ]
     };
 
     // The compiler told me to make this binding variable
@@ -67,25 +63,17 @@ fn str_to_hand(string: &str) -> Hand {
     let re_blue = Regex::new(r"(\d+) blue").unwrap();
 
     Hand {
-        red: one_int_from_str(string, re_red),
-        green: one_int_from_str(string, re_green),
-        blue: one_int_from_str(string, re_blue)
+        rgb: [
+            one_int_from_str(string, re_red),
+            one_int_from_str(string, re_green),
+            one_int_from_str(string, re_blue)
+        ]
     }
 }
 
 fn is_any_field_bigger(lhs: &Hand, rhs: &Hand) -> bool {
-    if lhs.red != None && rhs.red != None {
-        if lhs.red.unwrap() > rhs.red.unwrap() {
-            return true;
-        }
-    }
-    if lhs.green != None && rhs.green != None {
-        if lhs.green.unwrap() > rhs.green.unwrap() {
-            return true;
-        }
-    }
-    if lhs.blue != None && rhs.blue != None {
-        if lhs.blue.unwrap() > rhs.blue.unwrap() {
+    for n in 0..=2 {
+        if lhs.rgb[n].unwrap_or(0) > rhs.rgb[n].unwrap_or(0) {
             return true;
         }
     }
@@ -110,30 +98,22 @@ fn get_game_id(line: &str) -> i64 {
 
 fn max_of_each_colour(hands: &Vec<Hand>) -> Hand {
     let mut hand = Hand {
-        red: None, green: None, blue: None
+        rgb: [None, None, None]
     };
 
     for h in hands {
-        hand.red = match (hand.red, h.red) {
-            (r, None) => r,
-            (None, Some(r)) => Some(r),
-            (Some(r1), Some(r2)) => Some(std::cmp::max(r1,r2))
-        };
-        hand.green = match (hand.green, h.green) {
-            (g, None) => g,
-            (None, Some(g)) => Some(g),
-            (Some(g1), Some(g2)) => Some(std::cmp::max(g1,g2))
-        };
-        hand.blue = match (hand.blue, h.blue) {
-            (b, None) => b,
-            (None, Some(b)) => Some(b),
-            (Some(b1), Some(b2)) => Some(std::cmp::max(b1,b2))
-        };
+        for n in 0..=2 {
+            hand.rgb[n] = match (hand.rgb[n], h.rgb[n]) {
+                (x,        None)     => x,
+                (None,     Some(x))  => Some(x),
+                (Some(x1), Some(x2)) => Some(std::cmp::max(x1,x2))
+            };
+        }
     }
 
     return hand;
 }
 
 fn power(hand: &Hand) -> i64 {
-    return hand.red.unwrap_or(1) * hand.green.unwrap_or(1) * hand.blue.unwrap_or(1);
+    return hand.rgb.iter().map(|x| x.unwrap_or(1)).fold(1, |acc,x| acc * x);
 }
