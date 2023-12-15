@@ -196,13 +196,13 @@ mod tests {
     }
 
     #[test]
-    fn upgrade() {
-        let s1 = String::from("1876...68.");
-        let s2 = String::from("....+.....");
+    fn upgrade_l1_numbers_l2_symbols() {
+        let s1 = String::from("1876...68.....143");
+        let s2 = String::from("....+.......&...*");
         let l1 = Line::new(s1);
         let l2 = Line::new(s2);
 
-        let mut testline = Line::upgrade(&l1, &l2);
+        let testline = Line::upgrade(&l1, &l2);
 
         assert!(matches!(testline.numbers[0].0, PlainOrPart::PartNumber),
             "First number now a PartNumber");
@@ -211,19 +211,37 @@ mod tests {
 
         assert_eq!(l1.numbers[0].1, testline.numbers[0].1,
             "Actual number struct is the same");
+    }
 
-        let s3 = String::from("2233+..44.");
-        let s4 = String::from("......*.+.");
-        let l3 = Line::new(s3);
-        let l4 = Line::new(s4);
-        testline = Line::upgrade(&l3, &l4);
-        testline = Line::upgrade(&testline, &testline);
+    #[test]
+    fn upgrade_part_number_from_same_line() {
+        let s1 = String::from("2233+..44.");
+        let line = Line::new(s1);
+        let testline = Line::upgrade(&line, &line);
 
         assert_eq!(testline.numbers.len(), 2, "Found 2 numbers");
         assert_eq!(testline.symbols.len(), 1, "Found 1 symbol");
         assert!(matches!(testline.numbers[0].0, PlainOrPart::PartNumber),
             "First number now a PartNumber");
-        assert!(matches!(testline.numbers[1].0, PlainOrPart::PartNumber),
+        assert!(matches!(testline.numbers[1].0, PlainOrPart::PlainNumber),
+            "Second number still a PlainNumber");
+    }
+
+    #[test]
+    fn upgrade_multiple_symbols_for_same_number() {
+        let s1 = String::from("..$1234....658.");
+        let s2 = String::from(".....^.^.......");
+        let l1 = Line::new(s1);
+        let l2 = Line::new(s2);
+        let testline = Line::upgrade(&l1, &l2);
+
+        // The bug here was adding the number several times so this is the
+        // most relevant test here.
+        assert_eq!(testline.numbers.len(), 2, "Found 2 numbers");
+        assert_eq!(testline.symbols.len(), 1, "Found 1 symbol");
+        assert!(matches!(testline.numbers[0].0, PlainOrPart::PartNumber),
+            "First number now a PartNumber");
+        assert!(matches!(testline.numbers[1].0, PlainOrPart::PlainNumber),
             "Second number still a PlainNumber");
 
     }
