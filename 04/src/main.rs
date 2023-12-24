@@ -1,18 +1,16 @@
 use std::env;
+use std::collections::VecDeque;
 use std::fs::read_to_string;
-use regex::Regex;
 
 #[derive(Debug)]
 struct Card {
-    num: usize,
     winning: Vec<usize>,
     have: Vec<usize>
 }
 
 impl Card {
     fn from(s : &str) -> Self {
-        let (cnum, nums) = s.split_once(':').unwrap();
-        let num = one_int_from_str(cnum, Regex::new(r"Card\s+(\d+)").unwrap()).unwrap();
+        let (_, nums) = s.split_once(':').unwrap();
         let (wnums, hnums) = nums.split_once('|').unwrap();
         let winning = wnums.split(' ')
             .filter_map(|s| s.parse::<usize>().ok())
@@ -22,7 +20,6 @@ impl Card {
             .collect();
 
         Card {
-            num: num,
             winning: winning,
             have: have
         }
@@ -38,24 +35,36 @@ fn main() {
     let binding = read_to_string(&argv[1])
         .unwrap();
 
-    let mut total_score : usize = 0;
+    let mut pt1_score : usize = 0;
+    let mut pt2_score : usize = 0;
+    let mut multipliers : VecDeque<usize> = VecDeque::new();
 
     for input_line in binding.lines() {
         let c = Card::from(input_line);
-        let have_wins = c.have_wins();
-        if have_wins.len() != 0 {
-            total_score += usize::pow(2, (c.have_wins().len() - 1).try_into().unwrap());
+        let num_wins = c.have_wins().len();
+        let current_mult = multipliers.pop_front().unwrap_or(1);
+        pt2_score += current_mult;
+
+
+        if num_wins != 0 {
+            if multipliers.len() < num_wins {
+                multipliers.resize(num_wins, 1);
+            }
+
+            // Part 1: for every win on the card, this card is worth double;
+            // that's just 2^wins.
+            pt1_score += usize::pow(2, (c.have_wins().len() - 1).try_into().unwrap());
+
+            // Part 2: for every win on the card, you get 1 more of each of the
+            // next N cards. So if you already have X copies of this card, then
+            // all X of them will have N wins. So the next N cards will get X
+            // more copies. The total is how many cards you end up with.
+            for n in 0..num_wins {
+                multipliers[n] += current_mult;
+            }
         }
     }
 
-    println!("{}", total_score);
-}
-
-fn one_int_from_str(string: &str, re: Regex) -> Option<usize> {
-    if let Some(res) = re.captures(string) {
-        let (_, [num]) = res.extract();
-        return Some(num.parse::<usize>().unwrap());
-    }
-    return None;
-
+    println!("Part 1 score: {}", pt1_score);
+    println!("Part 2 score: {}", pt2_score);
 }
